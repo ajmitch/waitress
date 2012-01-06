@@ -20,7 +20,10 @@ class Adjustments(object):
     """This class contains tunable parameters.
     """
     # hostname or IP address to listen on
-    host = '0.0.0.0'
+    if socket.has_ipv6:
+        host = '::'
+    else:
+        host = '0.0.0.0'
 
     # TCP port to listen on
     port = 8080

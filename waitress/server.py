@@ -52,10 +52,18 @@ class WSGIServer(logging_dispatcher, object):
         self.task_dispatcher = _dispatcher
         self.asyncore.dispatcher.__init__(self, _sock, map=map)
         if _sock is None:
-            self.create_socket(socket.AF_INET, socket.SOCK_STREAM)
+            try:
+                info = socket.getaddrinfo( self.adj.host, self.adj.port, socket.AF_UNSPEC,
+                                           socket.SOCK_STREAM, 0, socket.AI_PASSIVE)
+                if info:
+                    self.create_socket(info[0][0], socket.SOCK_STREAM)
+            except socket.gaierror:
+                self.create_socket(socket.AF_INET, socket.SOCK_STREAM)
+                
         self.set_reuse_addr()
         self.bind((self.adj.host, self.adj.port))
-        self.effective_host, self.effective_port = self.getsockname()
+        # Ignore scope & flow ID if returned for IPv6 sockets
+        self.effective_host, self.effective_port = self.getsockname()[:2]
         self.server_name = self.get_server_name(self.adj.host)
         self.active_channels = {}
         if _start:
